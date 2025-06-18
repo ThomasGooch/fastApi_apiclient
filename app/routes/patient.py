@@ -8,6 +8,12 @@ router = APIRouter()
 def get_fhir_service():
     return FHIRService()
 
+def remove_extra_fields(data: dict) -> dict:
+    # Remove non-standard fields like meta.createdAt
+    if "meta" in data and isinstance(data["meta"], dict):
+        data["meta"].pop("createdAt", None)
+    return data
+
 @router.post("/patients", response_model=Patient)
 async def create_patient(
     patient: Patient,
@@ -16,6 +22,7 @@ async def create_patient(
     try:
         # Use mode="json" to ensure all fields are serializable
         result = await fhir_service.create_patient(patient.model_dump(mode="json"))
+        result = remove_extra_fields(result)
         return Patient.model_validate(result)
     except CircuitBreakerError:
         raise HTTPException(
@@ -30,6 +37,7 @@ async def get_patient(
 ):
     try:
         result = await fhir_service.fetch_patient_by_id(patient_id)
+        result = remove_extra_fields(result)
         return Patient.model_validate(result)
     except CircuitBreakerError:
         raise HTTPException(
@@ -45,6 +53,7 @@ async def update_patient(
 ):
     try:
         result = await fhir_service.update_patient(patient_id, patient.model_dump(mode="json"))
+        result = remove_extra_fields(result)
         return Patient.model_validate(result)
     except CircuitBreakerError:
         raise HTTPException(
