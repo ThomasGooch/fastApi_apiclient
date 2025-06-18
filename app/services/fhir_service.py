@@ -10,7 +10,7 @@ breaker = CircuitBreaker(fail_max=5, timeout_duration=30)
 
 class FHIRService:
     def __init__(self):
-        self.client = httpx.AsyncClient(base_url=FHIR_BACKEND_URL)
+        self.client = httpx.AsyncClient(base_url=FHIR_BACKEND_URL, verify=False)
 
     @breaker
     @retry(
